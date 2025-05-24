@@ -1,7 +1,12 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller;
+
+use App\Service\TransferService;
+use App\Dto\TransferDto;
+use Cake\Http\Exception\BadRequestException;
 
 /**
  * Users Controller
@@ -10,6 +15,14 @@ namespace App\Controller;
  */
 class UsersController extends AppController
 {
+    private TransferService $transferService;
+
+    public function initialize(): void
+    {
+        parent::initialize();
+        $this->transferService = new TransferService();
+    }
+
     public function beforeFilter(\Cake\Event\EventInterface $event)
     {
         parent::beforeFilter($event);
@@ -135,4 +148,28 @@ class UsersController extends AppController
         }
     }
 
+    public function transfer()
+    {
+        try {
+            $dto = new TransferDto(
+                payerId: (string) $this->request->getAttribute('identity')->getIdentifier(),
+                payeeId: (string) $this->request->getData('payee_id'),
+                amount: (float) $this->request->getData('amount')
+            );
+            $this->transferService->execute($dto);
+
+            $this->set([
+                'success' => true,
+                'message' => 'Transferência concluída com sucesso.'
+            ]);
+        } catch (BadRequestException $e) {
+            // Mensagem amigável para o usuário
+            $this->Flash->error($e->getMessage());
+        } catch (\Exception $e) {
+            // Log de erro inesperado
+            $this->log($e->getMessage(), 'error');
+            $this->Flash->error('Erro inesperado. Tente novamente mais tarde.');
+        }
+        $this->redirect(['controller' => 'Pages', 'action' => 'home']);
+    }
 }
