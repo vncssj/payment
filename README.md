@@ -18,6 +18,10 @@ docker exec payment-web-1 composer install
 ```bash
 docker exec payment-web-1 php /var/www/html/bin/cake.php migrations migrate
 ```
+4. In case of permissions warning run:
+```bash
+docker exec payment-web-1 chmod -R 777  /var/www/html/tmp
+```
 4. It's needed create at least 2 users for make transfers, do it.
 
 ## Archtecture
